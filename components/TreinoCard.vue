@@ -71,6 +71,6 @@ const expandido = ref(false)
       </div>
     </div>
 
-    <TreinoDetalhes v-if="expandido" :observacoes="treino.observacoes" :rolas="treino.rolas" />
+    <TreinoDetalhes v-if="expandido" :observacoes="treino.observacoes ?? ''" :rolas="treino.rolas" />
   </div>
 </template>
