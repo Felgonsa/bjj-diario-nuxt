@@ -1,7 +1,9 @@
-import { computed, type Ref } from 'vue'
-import type { Treino } from '../utils/types'
+import { computed, type Ref } from 'vue';
+import type { Treino } from '../utils/types';
 
 export function useEstatisticas(treinos: Ref<Treino[]>) {
+
+
 
     // 1. Contagens Básicas
     const totalTreinos = computed(() => treinos.value.length)
@@ -11,51 +13,53 @@ export function useEstatisticas(treinos: Ref<Treino[]>) {
         return (minutos / 60).toFixed(1) // Ex: 12.5 horas
     })
 
-    // 2. Agregando todas as finalizações em um array só
-    const todasAplicadas = computed(() =>
-        treinos.value.flatMap(t => t.rolas.flatMap(r => r.finalizacoes_aplicadas))
-    )
+   const todasRolas = computed(() => {
+    return treinos.value.flatMap(treino => treino.rolas || [])
+  })
 
-    const todasSofridas = computed(() =>
-        treinos.value.flatMap(t => t.rolas.flatMap(r => r.finalizacoes_sofridas))
-    )
+  // 3. Finalizações (Feitas)
+  const totalFinalizacoesFeitas = computed(() => {
+    return todasRolas.value.filter(rola => rola.resultado === 'finalizei').length
+  })
 
-    const totalFinalizacoesFeitas = computed(() => todasAplicadas.value.length)
-    const totalFinalizacoesTomadas = computed(() => todasSofridas.value.length)
+  // 4. Finalizações (Tomadas)
+ const calcularMaisFrequente = (rolasFiltradas: any[]) => {
+    const contagem: Record<string, number> = {}
+    let maisFrequente = 'Nenhum'
+    let maxCount = 0
 
-    // 3. Função Mágica para achar o item mais frequente (A "Moda")
-    const encontrarMaisFrequente = (lista: string[]) => {
-        if (lista.length === 0) return '-'
+    rolasFiltradas.forEach(rola => {
+      // Só conta se realmente teve uma formaFinalizacao preenchida (não nula)
+      if (rola.formaFinalizacao) {
+        const golpe = rola.formaFinalizacao
+        contagem[golpe] = (contagem[golpe] || 0) + 1
 
-        const contagem: Record<string, number> = {}
-        let maxItem = ''
-        let maxCount = 0
-
-        // Limpa a string da posição para contar só o golpe? 
-        // Ex: "Armlock (Guarda)" virar só "Armlock"?
-        // Por enquanto vamos contar EXATO: "Armlock (Guarda)" é diferente de "Armlock (Montada)"
-        // Isso é bom para saber ONDE você é forte.
-
-        for (const item of lista) {
-            contagem[item] = (contagem[item] || 0) + 1
-            if (contagem[item] > maxCount) {
-                maxCount = contagem[item]
-                maxItem = item
-            }
+        if (contagem[golpe] > maxCount) {
+          maxCount = contagem[golpe]
+          maisFrequente = `${golpe} (${maxCount})`
         }
+      }
+    })
 
-        return `${maxItem} (${maxCount})`
-    }
+    return maisFrequente
+  }
 
-    const golpeMaisForte = computed(() => encontrarMaisFrequente(todasAplicadas.value))
-    const pontoFraco = computed(() => encontrarMaisFrequente(todasSofridas.value))
+  const golpeMaisForte = computed(() => {
+    const vitorias = todasRolas.value.filter(rola => rola.resultado === 'finalizei')
+    return calcularMaisFrequente(vitorias)
+  })
 
-    return {
-        totalTreinos,
-        horasTotais,
-        totalFinalizacoesFeitas,
-        totalFinalizacoesTomadas,
-        golpeMaisForte,
-        pontoFraco
-    }
+  // 6. O que mais pega você (Filtra onde o resultado foi 'fui_finalizado')
+  const pontoFraco = computed(() => {
+    const derrotas = todasRolas.value.filter(rola => rola.resultado === 'fui_finalizado')
+    return calcularMaisFrequente(derrotas)
+  })
+
+   return {
+    totalTreinos,
+    horasTotais,    
+    totalFinalizacoesFeitas,
+    golpeMaisForte,
+    pontoFraco
+  }
 }

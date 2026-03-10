@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Treino } from '../utils/types'
 import Dashboard from './Dashboard.vue'
 import Header from './Header.vue'
@@ -14,59 +14,24 @@ const usuarioMock = ref({
   dataGraduacao: '2025-12-19', // Exemplo: data que pegou a faixa azul
 })
 
-const treinos = ref<Treino[]>([
-  {
-    id: '1',
-    data: new Date('2026-01-26'),
-    duracao: 90,
-    observacoes: 'Treino focado em passagem. Gás acabou rápido.',
-    rolas: [
-      {
-        id: 'r1',
-        parceiro: 'Gabriel',
-        duracao: 6,
-        faixaParceiro: 'Roxa',
-        finalizacoes_aplicadas: [],
-        finalizacoes_sofridas: [],
-      },
-      {
-        id: 'r2',
-        parceiro: 'Matheus',
-        duracao: 6,
-        faixaParceiro: 'Branca',
-        finalizacoes_aplicadas: ['Armlock', 'Triângulo'],
-        finalizacoes_sofridas: [],
-      },
-    ],
-  },
-  {
-    id: '2',
-    data: new Date(),
-    duracao: 60,
-    observacoes: 'Treino solto meio dia.',
-    rolas: [
-      {
-        id: 'r3',
-        parceiro: 'Mestre',
-        duracao: 10,
-        faixaParceiro: 'Preta',
-        finalizacoes_aplicadas: [],
-        finalizacoes_sofridas: ['Estrangulamento', 'Chave de pé'],
-      },
-    ],
-  },
-])
+
+
+const {data: treinosData, pending, error, refresh} = await useFetch('/api/treinos') 
+// Exemplo de como poderia ser a chamada para buscar os treinos reais da API
+
+const treinos = computed(() => treinosData.value?.data || [])
 
 const mostrarForm = ref(false)
 
-const handleSalvarTreino = (novoTreino: Treino) => {
+const handleSalvarTreino = async (novoTreino: Treino) => {
   // Adiciona no começo da lista (unshift) para aparecer no topo
-  treinos.value.unshift(novoTreino)
+  await refresh()
 
   // Fecha o modal
   mostrarForm.value = false
 }
 </script>
+
 <template>
   <div class="min-h-screen bg-ui-background text-ui-text pb-24">
     <Header class="mb-6" />

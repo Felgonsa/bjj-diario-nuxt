@@ -4,8 +4,17 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   // 1. ADICIONE O MÓDULO AQUI:
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss',
+             '@scalar/nuxt'
+  ],
+
 
   // 2. DIGA ONDE ESTÁ SEU CSS GLOBAL (Vamos criar jajá):
-  css: ['~/assets/css/main.css']
+  css: ['~/assets/css/main.css'],
+
+  nitro: {
+    experimental: {
+      openAPI: true // Isso gera o arquivo JSON que o Scalar lê
+    }
+  }
 })

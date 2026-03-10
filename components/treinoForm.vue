@@ -210,7 +210,7 @@ const salvarTreino = () => {
               v-model="rolaTemp.faixaParceiro"
               class="w-full p-2 border border-ui-border rounded text-sm outline-none bg-white"
             >
-              <option v-for="f in OPCOES_FAIXA" :key="f" :value="f">{{ f }}</option>
+              <option v-for="f in OPCOES_FAIXA" :key="f.value" :value="f.value">{{ f.label }}</option>
             </select>
           </div>
         </div>

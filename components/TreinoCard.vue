@@ -8,9 +8,13 @@ defineProps<{
   treino: Treino
 }>()
 
+
+
 // Função utilitária para formatar data (pode ficar aqui por enquanto)
 const formatarData = (valor: string | Date | undefined) => {
   if (!valor) return 'Data indefinida'
+
+  valor = new Date(valor) // Garante que seja um objeto Date
   
   let dataString = typeof valor === 'string' 
     ? valor 
@@ -55,7 +59,7 @@ const expandido = ref(false)
 
       <div class="flex items-center gap-3">
         <span class="bg-brand-light text-brand text-xs font-bold px-2.5 py-1 rounded-full">
-          {{ treino.rolas.length }} Rolas
+          {{ treino.rolas?.length || 0 }} Rolas
         </span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -71,6 +75,6 @@ const expandido = ref(false)
       </div>
     </div>
 
-    <TreinoDetalhes v-if="expandido" :observacoes="treino.observacoes ?? ''" :rolas="treino.rolas" />
+    <TreinoDetalhes v-if="expandido" :observacoes="treino.observacoes ?? ''" :rolas="treino.rolas || []" />
   </div>
 </template>

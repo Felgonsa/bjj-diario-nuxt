@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { toRefs } from 'vue'
-import { useEstatisticas } from '../composables/useEstatisticas'
-import type { Treino } from '../utils/types'
+import { toRefs } from 'vue';
+import { useEstatisticas } from '../composables/useEstatisticas';
+import type { Treino } from '../utils/types';
 
 const props = defineProps<{
   treinos: Treino[]
@@ -20,7 +20,9 @@ const diasNaFaixa = () => {
   const diffTime = Math.abs(hoje.getTime() - inicio.getTime())
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
+
 </script>
+
 
 <template>
   <div class="space-y-6">
@@ -63,7 +65,7 @@ const diasNaFaixa = () => {
 
       <div class="bg-white p-4 rounded-xl border border-ui-border shadow-sm">
         <p class="text-xs text-red-700 font-bold uppercase">Finalizações (Tomadas)</p>
-        <p class="text-3xl font-bold text-red-700 mt-1">{{ stats.totalFinalizacoesTomadas }}</p>
+        <p class="text-3xl font-bold text-red-700 mt-1">{{ stats.pontoFraco }}</p>
       </div>
     </div>
 
