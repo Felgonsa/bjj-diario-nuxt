@@ -4,10 +4,20 @@ import type { Treino } from '../utils/types';
 import TreinoDetalhes from './TreinoDetalhes.vue';
 
 // Recebe o objeto Treino do pai
-defineProps<{
+const props = defineProps<{
   treino: Treino
 }>()
 
+
+const emit = defineEmits(['delete'])
+
+// 2. Criamos uma função simples só para confirmar antes de gritar pro pai
+const confirmarExclusao = () => {
+  if (confirm('Tem certeza que deseja excluir este treino?')) {
+    // Se o usuário der OK, nós gritamos pro pai enviando o ID deste card
+    emit('delete', props.treino.id) 
+  }
+}
 
 
 // Função utilitária para formatar data (pode ficar aqui por enquanto)
@@ -57,7 +67,18 @@ const expandido = ref(false)
         <span class="text-xs text-ui-muted">Duração: {{ treino.duracao }} min</span>
       </div>
 
+
+<div class="card-treino-normal m-0 p-0">
+    <button 
+      @click="confirmarExclusao" 
+      class="text-red-500 hover:text-red-700 text-xs font-bold"
+    >
+      Excluir
+    </button>
+  </div>
+
       <div class="flex items-center gap-3">
+
         <span class="bg-brand-light text-brand text-xs font-bold px-2.5 py-1 rounded-full">
           {{ treino.rolas?.length || 0 }} Rolas
         </span>
@@ -72,7 +93,11 @@ const expandido = ref(false)
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
+        
       </div>
+      
+
+      
     </div>
 
     <TreinoDetalhes v-if="expandido" :observacoes="treino.observacoes ?? ''" :rolas="treino.rolas || []" />

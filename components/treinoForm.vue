@@ -4,9 +4,7 @@ import {
   LISTA_GOLPES,
   LISTA_POSICOES,
   OPCOES_FAIXA,
-  type FaixaJiuJitsu,
-  type Rola,
-  type Treino,
+  type FaixaJiuJitsu
 } from '../utils/types'
 import InputAutoComplete from './InputAutoComplete.vue'
 
@@ -24,15 +22,22 @@ const getDataHojeLocal = () => {
   return hojeLocal.toISOString().split('T')[0]
 }
 
-
+interface RolaRascunho {
+  id: number;
+  parceiro: string;
+  faixaParceiro: FaixaJiuJitsu;
+  duracao: number;
+  finalizacoes_aplicadas: string[];
+  finalizacoes_sofridas: string[];
+}
 
 
 // ESTADO: O Treino sendo criado
 const form = reactive({
-  data: getDataHojeLocal(), // Hoje (YYYY-MM-DD)
+  data: getDataHojeLocal(),
   duracao: 60,
   observacoes: '',
-  rolas: [] as Rola[],
+  rolas: [] as RolaRascunho[], // <-- A alteração é só esse RolaRascunho[]
 })
 
 console.log(form.data);
@@ -67,21 +72,21 @@ const confirmarRola = () => {
   if (!rolaTemp.parceiro) return alert('Diga o nome do parceiro!')
 
   form.rolas.push({
-    id: crypto.randomUUID(), // Gera ID único
-    parceiro: rolaTemp.parceiro,
-    faixaParceiro: rolaTemp.faixaParceiro,
+    id: Date.now(), 
+    parceiro: rolaTemp.parceiro, // <-- Aqui
+    faixaParceiro: rolaTemp.faixaParceiro, // <-- Aqui
     duracao: rolaTemp.duracao,
     finalizacoes_aplicadas: [...rolaTemp.finalizacoes_aplicadas],
-    finalizacoes_sofridas: [...rolaTemp.finalizacoes_sofridas],
+    finalizacoes_sofridas: [...rolaTemp.finalizacoes_sofridas]
   })
 
-  // Resetar formulário do rola
+  // Resetar formulário do rola temporário para o próximo parceiro
   rolaTemp.parceiro = ''
-  rolaTemp.faixaParceiro = 'Branca'
+  rolaTemp.faixaParceiro = 'branca'
   rolaTemp.finalizacoes_aplicadas = []
   rolaTemp.finalizacoes_sofridas = []
   rolaTemp.novaAplicada = ''
-  rolaTemp.novaSofrida = ''
+  rolaTemp.novaSofrida = '' 
 }
 
 // Estado temporário para o conjunto Golpe + Posição
@@ -106,31 +111,73 @@ const addComboFinalizacao = (tipo: 'aplicada' | 'sofrida') => {
   finalizacaoTemp.golpe = ''
   finalizacaoTemp.posicao = ''
 }
-
-const salvarTreino = () => {
+const salvarTreino = async () => {
+  // 1. Se o usuário digitou um parceiro mas esqueceu de clicar em "Confirmar Rola",
+  // nós empurramos para a lista automaticamente para ele não perder o dado.
   if (rolaTemp.parceiro && rolaTemp.parceiro.trim() !== '') {
-    // Empurra o que estava digitado para a lista oficial
-    form.rolas.push({
-      id: crypto.randomUUID(),
-      parceiro: rolaTemp.parceiro,
-      faixaParceiro: rolaTemp.faixaParceiro,
-      duracao: rolaTemp.duracao,
-      finalizacoes_aplicadas: [...rolaTemp.finalizacoes_aplicadas],
-      finalizacoes_sofridas: [...rolaTemp.finalizacoes_sofridas],
+    confirmarRola() 
+  }
+
+  try {
+    // 2. O TRADUTOR: Montando o Payload exatamente como o Zod exige
+    const payload = {
+      // Como não tem campo de "tipo" e "sentimento" no seu HTML atual, 
+      // enviamos valores padrão permitidos pelo seu banco para não quebrar.
+      tipo: 'com_kimono', 
+      sentimento: 'normal',
+      
+      // O Zod prefere receber datas em formato ISO
+      // Se tiver data, converte. Se o input estiver vazio/undefined, manda a data de agora.
+      data: form.data ? new Date(form.data).toISOString() : new Date().toISOString(),
+      duracao: form.duracao,
+      observacoes: form.observacoes || null,
+      
+      // Traduzindo a lista de rolas do Frontend para o Backend
+      rolas: form.rolas.map(r => {
+        let resultadoFinal = 'empate';
+        let golpeFinal = null;
+
+        // Se tem finalização aplicada, ele ganhou
+        if (r.finalizacoes_aplicadas.length > 0) {
+          resultadoFinal = 'finalizei';
+          golpeFinal = r.finalizacoes_aplicadas[0]; // Pega o primeiro golpe
+        } 
+        // Se não, mas tem sofrida, ele perdeu
+        else if (r.finalizacoes_sofridas.length > 0) {
+          resultadoFinal = 'fui_finalizado';
+          golpeFinal = r.finalizacoes_sofridas[0];
+        }
+
+        return {
+          nomeParceiro: r.parceiro, // <-- Puxa de r.parceiro
+          graduacaoParceiro: r.faixaParceiro, // <-- Puxa de r.faixaParceiro
+          duracao: r.duracao,
+          resultado: resultadoFinal,
+          formaFinalizacao: golpeFinal,
+          notas: null
+        }
+      })
+    }
+
+    console.log('PACOTE SAINDO DO FRONTEND:', JSON.stringify(payload, null, 2))
+
+    // 3. Disparando o POST real para a nossa API
+    const resposta = await $fetch('/api/treinos', {
+      method: 'POST',
+      body: payload
     })
-  }
-  const novoTreino: Treino = {
-    id: crypto.randomUUID(),
 
-    // ANTES: data: form.data,
-    // DEPOIS (Com a correção):
-    data: form.data as string,
+    console.log('Treino salvo no banco com sucesso!', resposta)
 
-    duracao: form.duracao,
-    observacoes: form.observacoes,
-    rolas: form.rolas,
+    // 4. Avisa a tela principal que deu certo! 
+    // (Não precisamos mais mandar o objeto falso, a tela principal vai dar o refresh)
+    emit('save')
+    
+  } catch (error: any) {
+    // Se o Zod barrar, o ofetch captura o erro aqui
+    console.error('Erro na validação do Zod:', error.data)
+    alert('Ops! Não foi possível salvar. Verifique o console.')
   }
-  emit('save', novoTreino)
 }
 </script>
 

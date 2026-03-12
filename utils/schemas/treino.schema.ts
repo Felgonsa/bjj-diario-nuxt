@@ -18,7 +18,18 @@ export const TreinoSchema = z.object({
   professor: z.string().min(1, 'Nome do professor não pode ser vazio').optional().nullable(),
   tecnicasAprendidas: z.string().optional().nullable(),
   sentimento: SentimentoSchema.optional().nullable(),
-  observacoes: z.string().optional().nullable()
+  observacoes: z.string().optional().nullable(),
+
+  rolas: z.array(z.object({
+    nomeParceiro: z.string(),
+    graduacaoParceiro: z.string(),
+    duracao: z.number().optional(),
+    resultado: z.enum(['finalizei', 'fui_finalizado', 'empate']),
+    formaFinalizacao: z.string().nullable().optional(),
+    notas: z.string().nullable().optional()
+  })).optional()
+
+
 });
 
 // Schema para criação de treino (todos os campos obrigatórios exceto os opcionais)

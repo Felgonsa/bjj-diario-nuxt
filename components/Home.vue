@@ -30,6 +30,18 @@ const handleSalvarTreino = async (novoTreino: Treino) => {
   // Fecha o modal
   mostrarForm.value = false
 }
+
+
+
+const excluirTreino = async (id: number) => {
+  try {
+    await $fetch(`/api/treinos/${id}`, { method: 'DELETE' })
+    await refresh() // Atualiza a lista mágica do Nuxt
+  } catch (error) {
+    console.error('Erro:', error)
+    alert('Erro ao excluir.')
+  }
+}
 </script>
 
 <template>
@@ -44,7 +56,7 @@ const handleSalvarTreino = async (novoTreino: Treino) => {
       </div>
 
       <div v-if="treinos.length > 0" class="flex flex-col gap-6">
-        <TreinoCard v-for="treino in treinos" :key="treino.id" :treino="treino" />
+        <TreinoCard v-for="treino in treinos" :key="treino.id" :treino="treino" @delete="excluirTreino" />
       </div>
     </main>
 
