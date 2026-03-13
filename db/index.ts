@@ -1,6 +1,10 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './schema';
+
+import * as authSchema from './schemas/auth';
+import * as treinosSchema from './schemas/treinos';
+
+
 
 // Configuração da conexão com o banco de dados
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/bjj_diario';
@@ -13,8 +17,14 @@ const client = postgres(connectionString, {
 });
 
 // Criar instância do Drizzle
-export const db = drizzle(client, { schema });
+export const db = drizzle(client, { 
+  schema: { 
+    ...authSchema, 
+    ...treinosSchema 
+  } 
+});
 
 // Exportar tipos
-export { faixas, rolas, treinos, usuarios } from './schema';
-export type { Faixa, NovaFaixa, NovaRola, NovoTreino, NovoUsuario, Rola, Treino, Usuario } from './schema';
+export * from './schemas/auth';
+export * from './schemas/treinos';
+

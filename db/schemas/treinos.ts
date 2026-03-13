@@ -2,60 +2,15 @@ import { relations } from 'drizzle-orm';
 import {
   boolean,
   integer,
-  pgEnum,
   pgTable,
   real,
   serial,
   text,
   timestamp
 } from 'drizzle-orm/pg-core';
+import { users } from './auth';
+import { faixaEnum, resultadoRolaEnum, sentimentoEnum, tipoTreinoEnum } from './enums';
 
-// ==================== ENUMS ====================
-
-// Enum para faixas de Jiu-Jitsu
-export const faixaEnum = pgEnum('faixa', [
-  'branca',
-  'cinza_com_branca',
-  'cinza',
-  'cinza_com_preta',
-  'amarela_com_branca',
-  'amarela',
-  'amarela_com_preta',
-  'laranja_com_branca',
-  'laranja',
-  'laranja_com_preta',
-  'verde_com_branca',
-  'verde',
-  'verde_com_preta',
-  'azul',
-  'roxa',
-  'marrom',
-  'preta'
-]);
-
-// Enum para tipo de treino
-export const tipoTreinoEnum = pgEnum('tipo_treino', [
-  'com_kimono',
-  'sem_kimono', 
-  'drills',
-  'open_mat'
-]);
-
-// Enum para resultado da rola
-export const resultadoRolaEnum = pgEnum('resultado_rola', [
-  'finalizei',
-  'fui_finalizado',
-  'empate'
-]);
-
-// Enum para sentimento do treino
-export const sentimentoEnum = pgEnum('sentimento', [
-  'cansado',
-  'forte',
-  'destruido',
-  'tecnico',
-  'normal'
-]);
 
 // ==================== TABELAS ====================
 
@@ -76,8 +31,9 @@ export const usuarios = pgTable('usuarios', {
 
 // Tabela de treinos
 export const treinos = pgTable('treinos', {
+
   id: serial('id').primaryKey(),
-  usuarioId: integer('usuario_id').notNull().references(() => usuarios.id, { onDelete: 'cascade' }),
+  usuarioId: text('usuario_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   data: timestamp('data').notNull(),
   duracao: integer('duracao').notNull(), // em minutos
   tipo: tipoTreinoEnum('tipo').notNull(),
@@ -118,9 +74,9 @@ export const usuariosRelations = relations(usuarios, ({ many }) => ({
 }));
 
 export const treinosRelations = relations(treinos, ({ one, many }) => ({
-  usuario: one(usuarios, {
+  usuario: one(users, {
     fields: [treinos.usuarioId],
-    references: [usuarios.id]
+    references: [users.id]
   }),
   rolas: many(rolas),
 }));
