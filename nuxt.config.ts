@@ -5,7 +5,8 @@ export default defineNuxtConfig({
 
   // 1. ADICIONE O MÓDULO AQUI:
   modules: ['@nuxtjs/tailwindcss',
-             '@scalar/nuxt'
+             '@scalar/nuxt',
+             '@nuxt/icon'
   ],
 
 

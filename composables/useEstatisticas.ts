@@ -22,6 +22,10 @@ export function useEstatisticas(treinos: Ref<Treino[]>) {
     return todasRolas.value.filter(rola => rola.resultado === 'finalizei').length
   })
 
+   const totalFinalizacoesTomadas = computed(() => {
+    return todasRolas.value.filter(rola => rola.resultado === 'fui_finalizado').length
+  })
+
   // 4. Finalizações (Tomadas)
  const calcularMaisFrequente = (rolasFiltradas: any[]) => {
     const contagem: Record<string, number> = {}
@@ -59,6 +63,7 @@ export function useEstatisticas(treinos: Ref<Treino[]>) {
     totalTreinos,
     horasTotais,    
     totalFinalizacoesFeitas,
+    totalFinalizacoesTomadas,
     golpeMaisForte,
     pontoFraco
   }

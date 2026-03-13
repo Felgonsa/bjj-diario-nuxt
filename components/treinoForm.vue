@@ -36,8 +36,12 @@ interface RolaRascunho {
 const form = reactive({
   data: getDataHojeLocal(),
   duracao: 60,
+  tipo: 'com_kimono', 
+  sentimento: 'normal', 
+  professor: '', 
+  tecnicasAprendidas: '',
   observacoes: '',
-  rolas: [] as RolaRascunho[], // <-- A alteração é só esse RolaRascunho[]
+  rolas: [] as RolaRascunho[], 
 })
 
 console.log(form.data);
@@ -121,13 +125,10 @@ const salvarTreino = async () => {
   try {
     // 2. O TRADUTOR: Montando o Payload exatamente como o Zod exige
     const payload = {
-      // Como não tem campo de "tipo" e "sentimento" no seu HTML atual, 
-      // enviamos valores padrão permitidos pelo seu banco para não quebrar.
-      tipo: 'com_kimono', 
-      sentimento: 'normal',
-      
-      // O Zod prefere receber datas em formato ISO
-      // Se tiver data, converte. Se o input estiver vazio/undefined, manda a data de agora.
+      tipo: form.tipo, 
+      sentimento: form.sentimento,
+      professor: form.professor || null, // Se estiver vazio, manda null pro banco
+      tecnicasAprendidas: form.tecnicasAprendidas || null,
       data: form.data ? new Date(form.data).toISOString() : new Date().toISOString(),
       duracao: form.duracao,
       observacoes: form.observacoes || null,
@@ -202,14 +203,47 @@ const salvarTreino = async () => {
         />
       </div>
 
+       <div>
+        <label class="block text-sm font-medium text-ui-text mb-1">Técnicas focadas</label>
+        <input type="text" v-model="form.tecnicasAprendidas" placeholder="Ex: Passagem de guarda aranha" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
+      </div>
+
       <div>
         <label class="block text-sm font-medium text-ui-text mb-1">Como foi o treino? (Obs)</label>
         <textarea
           v-model="form.observacoes"
           rows="3"
-          placeholder="Focamos em passagem, estava muito quente..."
+          placeholder="Estava muito quente..."
           class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none resize-none"
         ></textarea>
+
+        <div>
+        <label class="block text-sm font-medium text-ui-text mb-1">Tipo de Treino</label>
+        <select v-model="form.tipo" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none">
+          <option value="com_kimono">Com Kimono</option>
+          <option value="sem_kimono">No-Gi (Sem Kimono)</option>
+          <option value="drills">Apenas Drills</option>
+          <option value="open_mat">Open Mat</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-ui-text mb-1">Como você se sentiu?</label>
+        <select v-model="form.sentimento" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none">
+          <option value="normal">Normal</option>
+          <option value="forte">Forte / Voando</option>
+          <option value="tecnico">Técnico / Fluido</option>
+          <option value="cansado">Cansado</option>
+          <option value="destruido">Destruído (Amassado)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-ui-text mb-1">Professor(a) de hoje</label>
+        <input type="text" v-model="form.professor" placeholder="Ex: Mestre Elton" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
+      </div>
+
+     
       </div>
 
       <div class="pt-4 flex gap-3">

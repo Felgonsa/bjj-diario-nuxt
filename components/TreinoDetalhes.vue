@@ -3,7 +3,6 @@ import type { Rola } from '../utils/types'; // Importamos só o tipo Rola
 
 // Recebemos apenas o que interessa para o detalhe
 const props = defineProps<{
-  observacoes: string
   rolas: Rola[]
 }>()
 
@@ -13,9 +12,7 @@ console.log('Rolas recebidas no TreinoDetalhes:', props.rolas)
 
 <template>
   <div class="px-5 pb-5 border-t border-ui-border pt-4 animate-fade-in">
-    <p class="text-ui-text text-sm mb-4 italic border-l-4 border-brand-light pl-3">
-      "{{ observacoes }}"
-    </p>
+  
 
     <div class="space-y-3">
       <div v-for="rola in rolas" :key="rola.id" class="bg-ui-background p-3 rounded border border-ui-border text-sm">

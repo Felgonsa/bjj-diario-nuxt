@@ -65,7 +65,7 @@ const diasNaFaixa = () => {
 
       <div class="bg-white p-4 rounded-xl border border-ui-border shadow-sm">
         <p class="text-xs text-red-700 font-bold uppercase">Finalizações (Tomadas)</p>
-        <p class="text-3xl font-bold text-red-700 mt-1">{{ stats.pontoFraco }}</p>
+        <p class="text-3xl font-bold text-red-700 mt-1">{{ stats.totalFinalizacoesTomadas }}</p>
       </div>
     </div>
 

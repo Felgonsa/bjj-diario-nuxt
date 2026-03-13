@@ -15,8 +15,29 @@ const emit = defineEmits(['delete'])
 const confirmarExclusao = () => {
   if (confirm('Tem certeza que deseja excluir este treino?')) {
     // Se o usuário der OK, nós gritamos pro pai enviando o ID deste card
-    emit('delete', props.treino.id) 
+    emit('delete', props.treino.id)
   }
+}
+
+const formatarTipo = (tipo: string) => {
+  const mapa: Record<string, string> = {
+    com_kimono: '🥋 Com Kimono',
+    sem_kimono: '🩳 No-Gi',
+    drills: '🔄 Apenas Drills',
+    open_mat: '🥊 Open Mat'
+  }
+  return mapa[tipo] || tipo
+}
+
+const formatarSentimento = (sentimento: string) => {
+  const mapa: Record<string, string> = {
+    forte: '🔥 Voando',
+    tecnico: '🧠 Técnico',
+    normal: '🙂 Normal',
+    cansado: '🪫 Cansado',
+    destruido: '💀 Destruído'
+  }
+  return mapa[sentimento] || sentimento
 }
 
 
@@ -25,9 +46,9 @@ const formatarData = (valor: string | Date | undefined) => {
   if (!valor) return 'Data indefinida'
 
   valor = new Date(valor) // Garante que seja um objeto Date
-  
-  let dataString = typeof valor === 'string' 
-    ? valor 
+
+  let dataString = typeof valor === 'string'
+    ? valor
     : valor.toISOString().split('T')[0] ?? ''
 
   if (!dataString) return '--'
@@ -42,7 +63,7 @@ const formatarData = (valor: string | Date | undefined) => {
   const dataUTC = new Date(Date.UTC(ano, mes - 1, dia))
 
   return new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'long', 
+    weekday: 'long',
     day: 'numeric',
     month: 'long',
     timeZone: 'UTC'
@@ -52,54 +73,67 @@ const formatarData = (valor: string | Date | undefined) => {
 const expandido = ref(false)
 </script>
 <template>
-  <div
-    class="bg-ui-surface rounded-lg shadow-sm border border-ui-border transition-all duration-200 hover:shadow-md"
-  >
-    <div
-      @click="expandido = !expandido"
-      class="p-5 cursor-pointer flex justify-between items-start"
-    >
-      <div class="flex flex-col">
-        <h3 class="font-bold text-lg text-ui-text capitalize">
-          {{ formatarData(treino.data) }}
-        </h3>
-        <span class="text-xs text-ui-muted">{{ treino.observacoes }}</span>
-        <span class="text-xs text-ui-muted">Duração: {{ treino.duracao }} min</span>
+  <div class="bg-ui-surface rounded-lg shadow-sm border border-ui-border transition-all duration-200 hover:shadow-md">
+    
+    <div @click="expandido = !expandido" class="p-4 cursor-pointer flex flex-col gap-3">
+      
+      <div class="flex justify-between items-start">
+        <div>
+          <h3 class="font-bold text-base text-ui-text capitalize leading-tight">
+            {{ formatarData(treino.data) }}
+          </h3>
+          <span class="text-xs text-ui-muted font-medium mt-1 inline-block">
+            Duração: {{ treino.duracao }} min
+          </span>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <span class="bg-brand-light text-brand text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+            {{ treino.rolas?.length || 0 }} Rolas
+          </span>
+          <Icon name="heroicons:chevron-down" class="w-5 h-5 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': expandido }" />
+        </div>
       </div>
 
+      <div class="flex justify-between items-center mt-1">
+        
+        <div class="flex flex-wrap gap-2">
+          <span v-if="treino.tipo" class="flex items-center gap-1 bg-gray-50 text-gray-600 text-[11px] font-semibold px-2 py-1 rounded border border-gray-200">
+            {{ formatarTipo(treino.tipo) }}
+          </span>
+          <span v-if="treino.sentimento" class="flex items-center gap-1 bg-gray-50 text-gray-600 text-[11px] font-semibold px-2 py-1 rounded border border-gray-200">
+            {{ formatarSentimento(treino.sentimento) }}
+          </span>
+        </div>
 
-<div class="card-treino-normal m-0 p-0">
-    <button 
-      @click="confirmarExclusao" 
-      class="text-red-500 hover:text-red-700 text-xs font-bold"
-    >
-      Excluir
-    </button>
-  </div>
-
-      <div class="flex items-center gap-3">
-
-        <span class="bg-brand-light text-brand text-xs font-bold px-2.5 py-1 rounded-full">
-          {{ treino.rolas?.length || 0 }} Rolas
-        </span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-          class="w-5 h-5 text-gray-400 transition-transform duration-200"
-          :class="{ 'rotate-180': expandido }"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
+        <button @click.stop="confirmarExclusao" class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-red-50" title="Excluir treino">
+          <Icon name="heroicons:trash" class="w-4 h-4" />
+        </button>
         
       </div>
-      
-
-      
     </div>
 
-    <TreinoDetalhes v-if="expandido" :observacoes="treino.observacoes ?? ''" :rolas="treino.rolas || []" />
+    <div v-if="expandido" class="px-4 pb-4 border-t border-gray-100 pt-4">
+      
+      <div class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm bg-gray-50/50 p-3 rounded-md border border-gray-100">
+        <div v-if="treino.professor">
+          <span class="font-semibold text-gray-400 block text-[10px] uppercase tracking-wider mb-0.5">Professor</span>
+          <span class="text-gray-700">{{ treino.professor }}</span>
+        </div>
+        
+        <div v-if="treino.tecnicasAprendidas">
+          <span class="font-semibold text-gray-400 block text-[10px] uppercase tracking-wider mb-0.5">Técnicas Focadas</span>
+          <span class="text-gray-700">{{ treino.tecnicasAprendidas }}</span>
+        </div>
+        
+        <div v-if="treino.observacoes" class="sm:col-span-2 mt-2 pt-2 border-t border-gray-100">
+          <span class="font-semibold text-gray-400 block text-[10px] uppercase tracking-wider mb-1">Observações Pessoais</span>
+          <span class="text-gray-600 italic text-xs">"{{ treino.observacoes }}"</span>
+        </div>
+      </div>
+
+      <TreinoDetalhes :observacoes="treino.observacoes ?? ''" :rolas="treino.rolas || []" />
+      
+    </div>
   </div>
 </template>
