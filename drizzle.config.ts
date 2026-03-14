@@ -6,7 +6,7 @@ config();
 
 export default defineConfig({
   dialect: 'postgresql',
-  schema: './db/schema.ts',
+  schema: './db/index.ts',
   out: './drizzle',
   dbCredentials: {
     // Usa DATABASE_URL do Neon

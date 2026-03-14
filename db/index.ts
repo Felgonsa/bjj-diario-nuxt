@@ -26,5 +26,6 @@ export const db = drizzle(client, {
 
 // Exportar tipos
 export * from './schemas/auth';
+export * from './schemas/enums';
 export * from './schemas/treinos';
 
