@@ -7,6 +7,7 @@ import {
   type FaixaJiuJitsu
 } from '../utils/types'
 import InputAutoComplete from './InputAutoComplete.vue'
+const { data: session } = useAuth()
 
 // Emits para fechar o modal ou salvar o treino
 const emit = defineEmits(['close', 'save'])
@@ -125,6 +126,7 @@ const salvarTreino = async () => {
   try {
     // 2. O TRADUTOR: Montando o Payload exatamente como o Zod exige
     const payload = {
+      usuarioId: (session.value?.user as any)?.id,
       tipo: form.tipo, 
       sentimento: form.sentimento,
       professor: form.professor || null, // Se estiver vazio, manda null pro banco

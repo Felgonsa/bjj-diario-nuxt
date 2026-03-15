@@ -1,3 +1,4 @@
+import { getServerSession } from '#auth';
 import { db, rolas, treinos } from '~/db';
 import { CreateTreinoSchema } from '~/utils/schemas/treino.schema';
 
@@ -63,11 +64,17 @@ export default defineEventHandler(async (event) => {
   try {
     // Valida automaticamente com Zod e retorna erro 400 se falhar
     const validatedData = await readValidatedBody(event, (body) => CreateTreinoSchema.parse(body));
+    const session = await getServerSession(event)
     
-    // Por enquanto, sem autenticação - usar um usuário fixo
-    // TODO: Implementar autenticação
-    const usuarioId = 1;
+    if (!session || !session.user) {
+      throw createError({ 
+        statusCode: 401, 
+        statusMessage: 'Tatame fechado: Você precisa estar logado para salvar um treino.' 
+      })
+    }
     
+    const usuarioId = (session.user as any).id;
+
     const novoTreino = {
       usuarioId,
       data: new Date(validatedData.data),

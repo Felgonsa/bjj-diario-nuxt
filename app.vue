@@ -1,9 +1,5 @@
-<script setup lang="ts">
-import Home from './components/Home.vue';
-</script>
-
 <template>
-  <Home> </Home>
+  <div>
+    <NuxtPage />
+  </div>
 </template>
-
-<style scoped></style>

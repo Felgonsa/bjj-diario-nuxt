@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { toRefs } from 'vue';
 import { useEstatisticas } from '../composables/useEstatisticas';
-import type { Treino } from '../utils/types';
+import type { TreinoFrontend, UsuarioFrontend } from '../utils/types';
 
 const props = defineProps<{
-  treinos: Treino[]
-  usuario: { nome: string; faixa: string; dataGraduacao: string }
+  treinos: TreinoFrontend[]
+  usuario: UsuarioFrontend
 }>()
 
 // Precisamos converter a prop em Ref para o composable entender
@@ -15,7 +15,7 @@ const stats = useEstatisticas(treinos)
 
 // Calculando dias na faixa
 const diasNaFaixa = () => {
-  const inicio = new Date(props.usuario.dataGraduacao)
+  const inicio = new Date(props.usuario.dataCadastro)
   const hoje = new Date()
   const diffTime = Math.abs(hoje.getTime() - inicio.getTime())
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))

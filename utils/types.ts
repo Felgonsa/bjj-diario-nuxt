@@ -23,7 +23,7 @@ export type FaixaJiuJitsu =
 
 // Tipos para o frontend (compatíveis com os do Drizzle)
 export interface UsuarioFrontend {
-  id: number
+  id: string
   nome: string
   email: string
   faixa: FaixaJiuJitsu
@@ -34,9 +34,9 @@ export interface UsuarioFrontend {
 }
 
 export interface TreinoFrontend {
-  id: number
-  usuarioId: number
-  data: string
+  id: number 
+  usuarioId: string
+  data: string | string
   duracao: number // minutos
   tipo: 'com_kimono' | 'sem_kimono' | 'drills' | 'open_mat'
   professor?: string | null
@@ -47,8 +47,8 @@ export interface TreinoFrontend {
 }
 
 export interface RolaFrontend {
-  id: number
-  treinoId: number
+  id: string
+  treinoId: string
   nomeParceiro: string
   graduacaoParceiro: FaixaJiuJitsu
   resultado: 'finalizei' | 'fui_finalizado' | 'empate'

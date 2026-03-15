@@ -6,7 +6,8 @@ export default defineNuxtConfig({
   // 1. ADICIONE O MÓDULO AQUI:
   modules: ['@nuxtjs/tailwindcss',
              '@scalar/nuxt',
-             '@nuxt/icon'
+             '@nuxt/icon',
+             '@sidebase/nuxt-auth'
   ],
 
 
@@ -16,6 +17,18 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       openAPI: true // Isso gera o arquivo JSON que o Scalar lê
+    }
+  },
+
+auth: {
+    provider: {
+      type: 'authjs',
+      trustHost: true,
+      defaultProvider: 'google' 
+    },
+    
+    globalAppMiddleware: {
+      isEnabled: false
     }
   }
 })
