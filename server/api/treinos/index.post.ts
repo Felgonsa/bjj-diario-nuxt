@@ -96,8 +96,7 @@ export default defineEventHandler(async (event) => {
       // Prepara a lista carimbando o ID do treino recém-criado em cada rola
       const rolasParaInserir = validatedData.rolas.map((rola: any) => ({
         ...rola,
-        treinoId: treinoCriado.id, 
-        usuarioId: usuarioId 
+        treinoId: treinoCriado.id
       }));
 
       // Faz um insert em massa (bulk insert) de todas as lutas de uma vez

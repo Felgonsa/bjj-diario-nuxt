@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
-import { db, rolas } from '~/db';
+import { and, eq } from 'drizzle-orm';
+import { db, rolas, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 
 // GET /api/rolas/[id] - Detalhes de uma rola específica
 
@@ -54,6 +55,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
+    const usuarioId = await requireUser(event);
     const id = getRouterParam(event, 'id');
     
     if (!id) {
@@ -72,9 +74,13 @@ export default defineEventHandler(async (event) => {
       });
     }
     
-    const rola = await db.select().from(rolas).where(eq(rolas.id, rolaId));
+    // Buscar a rola verificando se pertence a um treino do usuário autenticado
+    const rolaComTreino = await db.select()
+      .from(rolas)
+      .innerJoin(treinos, eq(rolas.treinoId, treinos.id))
+      .where(and(eq(rolas.id, rolaId), eq(treinos.usuarioId, usuarioId)));
     
-    if (rola.length === 0) {
+    if (rolaComTreino.length === 0 || !rolaComTreino[0]) {
       throw createError({
         statusCode: 404,
         statusMessage: 'Rola não encontrada'
@@ -83,7 +89,7 @@ export default defineEventHandler(async (event) => {
     
     return {
       success: true,
-      data: rola[0]
+      data: rolaComTreino[0].rolas
     };
     
   } catch (error: any) {

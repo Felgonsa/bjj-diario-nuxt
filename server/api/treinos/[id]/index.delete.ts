@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, rolas, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 
 // DELETE /api/treinos/[id] - Excluir treino (e suas rolas relacionadas)
 
@@ -42,7 +43,7 @@ defineRouteMeta({
                         duracao: { type: 'integer', example: 90 },
                         tipo: { 
                 type: 'string', 
-                enum: ['com_kimono', 'sem_kimono', 'drills', 'open_mat'], // O Scalar cria um dropdown com isso
+                enum: ['com_kimono', 'sem_kimono', 'drills', 'open_mat'],
                 example: 'com_kimono' 
               },
                         professor: { type: 'string', example: 'Mestre Carlos' },
@@ -66,6 +67,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
+    const usuarioId = await requireUser(event);
     const id = getRouterParam(event, 'id');
     
     if (!id) {
@@ -84,8 +86,10 @@ export default defineEventHandler(async (event) => {
       });
     }
     
-    // Verificar se o treino existe
-    const treinoExistente = await db.select().from(treinos).where(eq(treinos.id, treinoId));
+    // Verificar se o treino existe E pertence ao usuário autenticado
+    const treinoExistente = await db.select()
+      .from(treinos)
+      .where(and(eq(treinos.id, treinoId), eq(treinos.usuarioId, usuarioId)));
     
     if (treinoExistente.length === 0) {
       throw createError({

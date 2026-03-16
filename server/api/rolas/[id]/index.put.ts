@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, rolas, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 import { UpdateRolaSchema } from '~/utils/schemas/rola.schema';
 
 // PUT /api/rolas/[id] - Atualizar rola
@@ -53,6 +54,8 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
+    const usuarioId = await requireUser(event);
+    
     // 1. Validar ID da rota
     const id = getRouterParam(event, 'id');
     if (!id || isNaN(Number(id)) || Number(id) <= 0) {
@@ -64,9 +67,13 @@ export default defineEventHandler(async (event) => {
 
     const rolaId = Number(id);
 
-    // 2. Verificar se a rola existe
-    const rolaExistente = await db.select().from(rolas).where(eq(rolas.id, rolaId));
-    if (!rolaExistente.length) {
+    // 2. Verificar se a rola existe E pertence a um treino do usuário autenticado
+    const rolaComTreino = await db.select()
+      .from(rolas)
+      .innerJoin(treinos, eq(rolas.treinoId, treinos.id))
+      .where(and(eq(rolas.id, rolaId), eq(treinos.usuarioId, usuarioId)));
+    
+    if (!rolaComTreino.length) {
       throw createError({ 
         statusCode: 404, 
         statusMessage: 'Rola não encontrada' 
@@ -76,13 +83,16 @@ export default defineEventHandler(async (event) => {
     // 3. Validar corpo da requisição com Zod usando readValidatedBody
     const validatedData = await readValidatedBody(event, (body) => UpdateRolaSchema.parse(body));
 
-    // 4. Verificar se o treino existe (se treinoId foi fornecido)
+    // 4. Verificar se o treino existe e pertence ao usuário (se treinoId foi fornecido)
     if (validatedData.treinoId !== undefined) {
-      const treinoExistente = await db.select().from(treinos).where(eq(treinos.id, validatedData.treinoId));
+      const treinoExistente = await db.select()
+        .from(treinos)
+        .where(and(eq(treinos.id, validatedData.treinoId), eq(treinos.usuarioId, usuarioId)));
+      
       if (!treinoExistente.length) {
         throw createError({ 
           statusCode: 404, 
-          statusMessage: 'Treino não encontrado' 
+          statusMessage: 'Treino não encontrado ou você não tem permissão para usar este treino' 
         });
       }
     }
@@ -108,7 +118,7 @@ export default defineEventHandler(async (event) => {
     if (Object.keys(dadosAtualizacao).length === 0) {
       return {
         success: true,
-        data: rolaExistente[0],
+        data: rolaComTreino[0]?.rolas,
         message: 'Nenhum dado para atualizar'
       };
     }

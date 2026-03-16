@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 
 // GET /api/treinos/[id] - Detalhes de um treino específico
 
@@ -37,7 +38,7 @@ defineRouteMeta({
                     duracao: { type: 'integer', example: 90 },
                     tipo: { 
                 type: 'string', 
-                enum: ['com_kimono', 'sem_kimono', 'drills', 'open_mat'], // O Scalar cria um dropdown com isso
+                enum: ['com_kimono', 'sem_kimono', 'drills', 'open_mat'],
                 example: 'com_kimono' 
               },
                     professor: { type: 'string', example: 'Mestre Carlos' },
@@ -59,6 +60,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
+    const usuarioId = await requireUser(event);
     const id = getRouterParam(event, 'id');
     
     if (!id) {
@@ -77,7 +79,10 @@ export default defineEventHandler(async (event) => {
       });
     }
     
-    const treino = await db.select().from(treinos).where(eq(treinos.id, treinoId));
+    // Busca o treino verificando se pertence ao usuário autenticado
+    const treino = await db.select()
+      .from(treinos)
+      .where(and(eq(treinos.id, treinoId), eq(treinos.usuarioId, usuarioId)));
     
     if (treino.length === 0) {
       throw createError({

@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 import { UpdateTreinoSchema } from '~/utils/schemas/treino.schema';
 
 // PUT /api/treinos/[id] - Atualizar treino
@@ -30,7 +31,7 @@ defineRouteMeta({
               duracao: { type: 'integer', description: 'Duração em minutos', example: 90 },
               tipo: { 
                 type: 'string', 
-                enum: ['com_kimono', 'sem_kimono', 'drills', 'open_mat'], // O Scalar cria um dropdown com isso
+                enum: ['com_kimono', 'sem_kimono', 'drills', 'open_mat'],
                 example: 'com_kimono' 
               },
               professor: { type: 'string', example: 'Mestre Carlos', nullable: true },
@@ -52,6 +53,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
+    const usuarioId = await requireUser(event);
     const id = getRouterParam(event, 'id');
     
     // Validar ID do treino
@@ -64,8 +66,10 @@ export default defineEventHandler(async (event) => {
     
     const treinoId = Number(id);
     
-    // Verificar se o treino existe
-    const treinoExistente = await db.select().from(treinos).where(eq(treinos.id, treinoId));
+    // Verificar se o treino existe E pertence ao usuário autenticado
+    const treinoExistente = await db.select()
+      .from(treinos)
+      .where(and(eq(treinos.id, treinoId), eq(treinos.usuarioId, usuarioId)));
     
     if (treinoExistente.length === 0) {
       throw createError({
@@ -121,7 +125,7 @@ export default defineEventHandler(async (event) => {
     // Atualizar data de atualização
     dadosAtualizacao.updatedAt = new Date();
     
-    // Atualizar no banco
+    // Atualizar no banco (já verificamos que pertence ao usuário)
     const [treinoAtualizado] = await db
       .update(treinos)
       .set(dadosAtualizacao)

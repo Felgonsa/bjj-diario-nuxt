@@ -1,4 +1,6 @@
-import { db } from '~/db';
+import { desc, eq } from 'drizzle-orm';
+import { db, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 
 // GET /api/treinos - Listar todos os treinos
 
@@ -47,26 +49,26 @@ defineRouteMeta({
   }
 });
 
+
 export default defineEventHandler(async (event) => {
-  try {
-    // Por enquanto, sem autenticação - retorna todos os treinos
-    const allTreinos = await db.query.treinos.findMany({
-  with: {
-    rolas: true //O Drizzle faz o JOIN sozinho.
-  }
-});
-    
+try {
+
+    const usuarioId = await requireUser(event)
+
+    const treinosDoUsuario = await db.select()
+      .from(treinos)
+      .where(eq(treinos.usuarioId, usuarioId))
+      .orderBy(desc(treinos.data));
+
     return {
       success: true,
-      data: allTreinos,
-      count: allTreinos.length
+      count: treinosDoUsuario.length,
+      data: treinosDoUsuario
     };
+
   } catch (error) {
     console.error('Erro ao buscar treinos:', error);
-    
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Erro interno ao buscar treinos'
-    });
+    // ... repassa o erro para frente (se for o erro 401 do requireUser, ele vai certinho)
+    throw error; 
   }
 });

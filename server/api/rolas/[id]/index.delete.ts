@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
-import { db, rolas } from '~/db';
+import { and, eq } from 'drizzle-orm';
+import { db, rolas, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 
 // DELETE /api/rolas/[id] - Excluir rola
 
@@ -61,6 +62,7 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
+    const usuarioId = await requireUser(event);
     const id = getRouterParam(event, 'id');
     
     if (!id) {
@@ -79,10 +81,13 @@ export default defineEventHandler(async (event) => {
       });
     }
     
-    // Verificar se a rola existe
-    const rolaExistente = await db.select().from(rolas).where(eq(rolas.id, rolaId));
+    // Verificar se a rola existe E pertence a um treino do usuário autenticado
+    const rolaComTreino = await db.select()
+      .from(rolas)
+      .innerJoin(treinos, eq(rolas.treinoId, treinos.id))
+      .where(and(eq(rolas.id, rolaId), eq(treinos.usuarioId, usuarioId)));
     
-    if (rolaExistente.length === 0) {
+    if (rolaComTreino.length === 0) {
       throw createError({
         statusCode: 404,
         statusMessage: 'Rola não encontrada'
@@ -97,7 +102,7 @@ export default defineEventHandler(async (event) => {
       message: 'Rola excluída com sucesso',
       data: {
         rolaId,
-        rolaExcluida: rolaExistente[0]
+        rolaExcluida: rolaComTreino[0]?.rolas
       }
     };
     

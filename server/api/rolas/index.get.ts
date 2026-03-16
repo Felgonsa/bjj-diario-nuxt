@@ -1,11 +1,13 @@
-import { db, rolas } from '~/db';
+import { eq } from 'drizzle-orm';
+import { db, rolas, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 
-// GET /api/rolas - Listar todas as rolas
+// GET /api/rolas - Listar todas as rolas do usuário autenticado
 
 defineRouteMeta({
   openAPI: {
-    summary: 'Listar todas as Rolas',
-    description: 'Retorna uma lista de todas as rolas registradas no diário.',
+    summary: 'Listar todas as Rolas do usuário',
+    description: 'Retorna uma lista de todas as rolas registradas pelo usuário autenticado.',
     responses: {
       200: {
         description: 'Lista de rolas retornada com sucesso',
@@ -45,12 +47,22 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
-    const allRolas = await db.select().from(rolas);
+    const usuarioId = await requireUser(event);
+    
+    // Buscar todas as rolas dos treinos do usuário autenticado
+    // Usando uma subquery para buscar rolas apenas dos treinos do usuário
+    const rolasDoUsuario = await db.select()
+      .from(rolas)
+      .innerJoin(treinos, eq(rolas.treinoId, treinos.id))
+      .where(eq(treinos.usuarioId, usuarioId));
+    
+    // Extrair apenas os dados das rolas
+    const rolasData = rolasDoUsuario.map(row => row.rolas);
     
     return {
       success: true,
-      data: allRolas,
-      count: allRolas.length
+      data: rolasData,
+      count: rolasData.length
     };
   } catch (error) {
     console.error('Erro ao buscar rolas:', error);

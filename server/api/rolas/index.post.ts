@@ -1,5 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, rolas, treinos } from '~/db';
+import { requireUser } from '~/server/utils/auth';
 import { CreateRolaSchema } from '~/utils/schemas/rola.schema';
 
 // POST /api/rolas/create - Criar nova rola
@@ -42,16 +43,20 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event) => {
   try {
+    const usuarioId = await requireUser(event);
+    
     // Valida automaticamente com Zod e retorna erro 400 se falhar
     const validatedData = await readValidatedBody(event, (body) => CreateRolaSchema.parse(body));
     
-    // Verificar se o treino existe
-    const treinoExistente = await db.select().from(treinos).where(eq(treinos.id, validatedData.treinoId));
+    // Verificar se o treino existe E pertence ao usuário autenticado
+    const treinoExistente = await db.select()
+      .from(treinos)
+      .where(and(eq(treinos.id, validatedData.treinoId), eq(treinos.usuarioId, usuarioId)));
     
     if (treinoExistente.length === 0) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Treino não encontrado'
+        statusMessage: 'Treino não encontrado ou você não tem permissão para adicionar rolas a este treino'
       });
     }
     
