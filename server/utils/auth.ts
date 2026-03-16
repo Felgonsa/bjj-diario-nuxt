@@ -3,7 +3,7 @@ import { H3Event } from 'h3'
 
 export const requireUser = async (event: H3Event) => {
   const session = await getServerSession(event)
-  
+
   if (!session || !session.user) {
     throw createError({ 
       statusCode: 401, 
