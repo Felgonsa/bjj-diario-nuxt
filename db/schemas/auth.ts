@@ -1,5 +1,5 @@
 import type { AdapterAccountType } from '@auth/core/adapters';
-import { boolean, integer, pgTable, primaryKey, real, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, date, integer, pgTable, primaryKey, real, text, timestamp } from 'drizzle-orm/pg-core';
 import { faixaEnum } from './enums'; // Importamos o enum do outro arquivo
 
 // A TABELA FUNDIDA: Padrão Auth.js + Seu código de Jiu-Jitsu
@@ -17,7 +17,13 @@ export const users = pgTable('user', {
   equipe: text('equipe'),
   pesoAtual: real('peso_atual'),
   dataCadastro: timestamp('data_cadastro').defaultNow().notNull(),
-  ativo: boolean('ativo').default(true).notNull()
+  ativo: boolean('ativo').default(true).notNull(),
+
+  // Novos campos de perfil
+  dataNascimento: date('data_nascimento', { mode: 'date' }),
+  dataUltimaGraduacao: date('data_ultima_graduacao', { mode: 'date' }),
+  altura: integer('altura'), // em centímetros
+  pesoMeta: real('peso_meta')
 })
 
 

@@ -1,9 +1,7 @@
 import { relations } from 'drizzle-orm';
 import {
-  boolean,
   integer,
   pgTable,
-  real,
   serial,
   text,
   timestamp
@@ -13,21 +11,6 @@ import { faixaEnum, resultadoRolaEnum, sentimentoEnum, tipoTreinoEnum } from './
 
 
 // ==================== TABELAS ====================
-
-// Tabela de usuários
-export const usuarios = pgTable('usuarios', {
-  id: serial('id').primaryKey(),
-  nome: text('nome').notNull(),
-  email: text('email').notNull().unique(),
-  senha: text('senha').notNull(),
-  faixa: faixaEnum('faixa').notNull().default('branca'),
-  graus: integer('graus').notNull().default(0),
-  equipe: text('equipe'),
-  pesoAtual: real('peso_atual'),
-  dataCadastro: timestamp('data_cadastro').defaultNow().notNull(),
-  dataAtualizacao: timestamp('data_atualizacao').defaultNow().notNull(),
-  ativo: boolean('ativo').default(true).notNull()
-});
 
 // Tabela de treinos
 export const treinos = pgTable('treinos', {
@@ -69,10 +52,6 @@ export const faixas = pgTable('faixas', {
 
 // ==================== RELAÇÕES ====================
 
-export const usuariosRelations = relations(usuarios, ({ many }) => ({
-  treinos: many(treinos),
-}));
-
 export const treinosRelations = relations(treinos, ({ one, many }) => ({
   usuario: one(users, {
     fields: [treinos.usuarioId],
@@ -90,8 +69,8 @@ export const rolasRelations = relations(rolas, ({ one }) => ({
 
 // ==================== TIPOS ====================
 
-export type Usuario = typeof usuarios.$inferSelect;
-export type NovoUsuario = typeof usuarios.$inferInsert;
+export type Usuario = typeof users.$inferSelect;
+export type NovoUsuario = typeof users.$inferInsert;
 
 export type Treino = typeof treinos.$inferSelect;
 export type NovoTreino = typeof treinos.$inferInsert;
