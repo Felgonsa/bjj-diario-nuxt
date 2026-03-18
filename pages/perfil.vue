@@ -1,3 +1,4 @@
+import { sessions } from '../db/schemas/auth';
 <script setup lang="ts">
 // 1. Puxando a sessão global do Google
 const { data: session } = useAuth()
@@ -42,6 +43,17 @@ const carregarDados = async () => {
 }
 
 await carregarDados()
+
+// 1. Puxando a sessão global do Google e a função de Logout
+const { data: sessions, signOut } = useAuth()
+
+
+// Função de Logout (com confirmação de segurança)
+const fazerLogout = async () => {
+  if (confirm('Tem certeza que deseja sair do seu diário?')) {
+    await signOut({ callbackUrl: '/login' })
+  }
+}
 
 // 4. O "Executor" - Envia os dados para salvar
 const salvarPerfil = async () => {
@@ -143,7 +155,13 @@ const salvarPerfil = async () => {
           <span v-else>Salvar Perfil</span>
         </button>
       </div>
-
-    </form>
+    </form><div class="mt-12 pt-6 border-t border-gray-200">
+      <button @click="fazerLogout" class="w-full py-3 bg-red-50 text-red-600 font-semibold rounded-md border border-red-200 hover:bg-red-100 transition flex justify-center items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        Sair do Aplicativo
+      </button>
+    </div>
   </div>
 </template>

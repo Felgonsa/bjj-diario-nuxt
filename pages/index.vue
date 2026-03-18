@@ -42,7 +42,7 @@ const excluirTreino = async (id: number) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-900 text-white pb-24">
+  <div class="min-h-screen text-white pb-24">
     <Header class="mb-6" />
 
     <main class="max-w-4xl mx-auto px-4 space-y-8">
