@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
       });
     }
     
-    const usuario = resultado[0];
+    const usuario = resultado[0]!;
     
     return {
       success: true,
