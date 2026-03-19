@@ -30,13 +30,30 @@ const handleSalvarTreino = async () => {
   mostrarForm.value = false
 }
 
+
 const excluirTreino = async (id: number) => {
-  if (!confirm('Deseja excluir este treino?')) return
+  // 1. Chamamos o alerta e "congelamos" a função aguardando a resposta do usuário
+  const querExcluir = await alertaConfirmar(
+    'Excluir Treino?', 
+    'Deseja excluir este treino definitivamente?', 
+    'Sim, excluir'
+  )
+
+  // 2. Early Return: Se ele clicou no Cancelar (false), a gente "mata" a função aqui mesmo
+  if (!querExcluir) return
+
+  // 3. Se passou do if, é porque ele quer excluir. Vamos ao banco de dados:
   try {
     await $fetch(`/api/treinos/${id}`, { method: 'DELETE' })
-    await refresh()
+    await refresh() // Recarrega a lista do Nuxt
+    
+    // 4. Sucesso! Mostra o Toast verde e some
+    alertaToast.sucesso('Treino apagado do histórico!')
+    
   } catch (error) {
     console.error('Erro ao excluir:', error)
+    // 5. Deu ruim no banco! Mostra o Toast vermelho
+    alertaToast.erro('Erro ao excluir', 'Não foi possível apagar o treino do banco de dados.')
   }
 }
 </script>

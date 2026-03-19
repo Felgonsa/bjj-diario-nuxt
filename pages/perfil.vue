@@ -1,8 +1,10 @@
 import { sessions } from '../db/schemas/auth';
 <script setup lang="ts">
+
 // 1. Puxando a sessão global do Google
-const { data: session } = useAuth()
+const { data: session, signOut } = useAuth()
 const user = computed(() => session.value?.user)
+
 
 // 2. Estado do formulário reativo (agora usando o padrão CamelCase do Zod do Cline)
 const isSaving = ref(false)
@@ -44,35 +46,35 @@ const carregarDados = async () => {
 
 await carregarDados()
 
-// 1. Puxando a sessão global do Google e a função de Logout
-const { data: sessions, signOut } = useAuth()
 
 
 // Função de Logout (com confirmação de segurança)
 const fazerLogout = async () => {
-  if (confirm('Tem certeza que deseja sair do seu diário?')) {
+  // Chama a utilidade global
+  const querSair = await alertaConfirmar('Sair do Tatame?', 'Tem certeza que deseja sair do seu diário?', 'Sim, quero sair')
+  
+  if (querSair) {
     await signOut({ callbackUrl: '/login' })
   }
 }
+
 
 // 4. O "Executor" - Envia os dados para salvar
 const salvarPerfil = async () => {
   isSaving.value = true
   try {
-    const resposta = await $fetch('/api/perfil', {
-      method: 'PUT',
-     
-      body: form.value
-    })
+    await $fetch('/api/perfil', { method: 'PUT', body: form.value })
     
-    alert('Perfil atualizado com sucesso no tatame!') 
+    // Sucesso em 1 linha
+    alertaToast.sucesso('Perfil atualizado no tatame!')
+    
   } catch (error: any) {
-    console.error('Erro ao salvar', error)
-    // Se o Zod barrar (erro 400), a gente mostra pro usuário
     if (error.response?.status === 400) {
-      alert('Atenção: ' + error.response._data.statusMessage)
+      // Aviso em 1 linha
+      alertaToast.aviso('Atenção nas Medidas', error.response._data.statusMessage)
     } else {
-      alert('Erro ao salvar o perfil.')
+      // Erro em 1 linha
+      alertaToast.erro('Erro ao salvar o perfil.')
     }
   } finally {
     isSaving.value = false

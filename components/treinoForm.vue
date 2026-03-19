@@ -74,7 +74,7 @@ const removerFinalizacao = (tipo: 'aplicada' | 'sofrida', index: number) => {
 
 // Confirmar o Rola atual e limpar para o próximo
 const confirmarRola = () => {
-  if (!rolaTemp.parceiro) return alert('Diga o nome do parceiro!')
+  if (!rolaTemp.parceiro) alertaToast.erro('Digite o nome do parceiro antes de confirmar a rola!')
 
   form.rolas.push({
     id: Date.now(), 
@@ -103,7 +103,7 @@ const finalizacaoTemp = reactive({
 // Finalizar tudo
 const addComboFinalizacao = (tipo: 'aplicada' | 'sofrida') => {
   if (!finalizacaoTemp.golpe || !finalizacaoTemp.posicao) {
-    return alert('Selecione o golpe e a posição!')
+    return alertaToast.erro('Preencha o Golpe e a Posição antes de adicionar a finalização!')
   }
 
   // Cria uma string formatada: "Armlock (Guarda Fechada)"
@@ -179,7 +179,7 @@ const salvarTreino = async () => {
   } catch (error: any) {
     // Se o Zod barrar, o ofetch captura o erro aqui
     console.error('Erro na validação do Zod:', error.data)
-    alert('Ops! Não foi possível salvar. Verifique o console.')
+    alertaToast.erro('Ops, algo deu errado ao salvar seu treino. Tente novamente.')
   }
 }
 </script>

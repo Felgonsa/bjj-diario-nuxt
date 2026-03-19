@@ -12,9 +12,16 @@ const props = defineProps<{
 const emit = defineEmits(['delete'])
 
 // 2. Criamos uma função simples só para confirmar antes de gritar pro pai
-const confirmarExclusao = () => {
-  if (confirm('Tem certeza que deseja excluir este treino?')) {
-    // Se o usuário der OK, nós gritamos pro pai enviando o ID deste card
+const confirmarExclusao = async () => {
+  // Usamos a nossa utilidade global: Título, Texto e o Botão de Ação
+  const querExcluir = await alertaConfirmar(
+    'Excluir Treino?', 
+    'Tem certeza que deseja apagar este treino? Ele sumirá do seu histórico.', 
+    'Sim, excluir'
+  )
+
+  if (querExcluir) {
+    // Se o usuário clicou no botão vermelho do SweetAlert, nós gritamos pro pai
     emit('delete', props.treino.id)
   }
 }
