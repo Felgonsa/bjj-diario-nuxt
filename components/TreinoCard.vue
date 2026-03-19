@@ -11,20 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['delete'])
 
-// 2. Criamos uma função simples só para confirmar antes de gritar pro pai
-const confirmarExclusao = async () => {
-  // Usamos a nossa utilidade global: Título, Texto e o Botão de Ação
-  const querExcluir = await alertaConfirmar(
-    'Excluir Treino?', 
-    'Tem certeza que deseja apagar este treino? Ele sumirá do seu histórico.', 
-    'Sim, excluir'
-  )
 
-  if (querExcluir) {
-    // Se o usuário clicou no botão vermelho do SweetAlert, nós gritamos pro pai
-    emit('delete', props.treino.id)
-  }
-}
 
 const formatarTipo = (tipo: string) => {
   const mapa: Record<string, string> = {
@@ -113,9 +100,9 @@ const expandido = ref(false)
           </span>
         </div>
 
-        <button @click.stop="confirmarExclusao" class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-red-50" title="Excluir treino">
-          <Icon name="heroicons:trash" class="w-4 h-4" />
-        </button>
+        <button @click.stop="emit('delete', props.treino.id)" class="text-red-400 hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-red-50" title="Excluir treino">
+  <Icon name="heroicons:trash" class="w-4 h-4" />
+</button>
         
       </div>
     </div>
