@@ -51,14 +51,17 @@ defineRouteMeta({
 
 
 export default defineEventHandler(async (event) => {
-try {
-
+  try {
     const usuarioId = await requireUser(event)
 
-    const treinosDoUsuario = await db.select()
-      .from(treinos)
-      .where(eq(treinos.usuarioId, usuarioId))
-      .orderBy(desc(treinos.data));
+    // Trocamos o db.select() tradicional pela API Relacional (db.query)
+    const treinosDoUsuario = await db.query.treinos.findMany({
+      where: eq(treinos.usuarioId, usuarioId),
+      orderBy: [desc(treinos.data)],
+      with: {
+        rolas: true // É AQUI QUE A MÁGICA ACONTECE! Trazemos o array de rolas aninhado.
+      }
+    });
 
     return {
       success: true,
@@ -68,7 +71,6 @@ try {
 
   } catch (error) {
     console.error('Erro ao buscar treinos:', error);
-    // ... repassa o erro para frente (se for o erro 401 do requireUser, ele vai certinho)
     throw error; 
   }
 });
