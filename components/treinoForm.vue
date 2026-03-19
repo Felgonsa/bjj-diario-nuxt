@@ -10,7 +10,7 @@ import InputAutoComplete from './InputAutoComplete.vue'
 const { data: session } = useAuth()
 
 // Emits para fechar o modal ou salvar o treino
-const emit = defineEmits(['close', 'save'])
+const emit = defineEmits(['salvo', 'cancelar'])
 
 // ESTADO: Controle dos Passos
 const passoAtual = ref(1) // 1 = Geral, 2 = Rolas
@@ -37,12 +37,12 @@ interface RolaRascunho {
 const form = reactive({
   data: getDataHojeLocal(),
   duracao: 60,
-  tipo: 'com_kimono', 
-  sentimento: 'normal', 
-  professor: '', 
+  tipo: 'com_kimono',
+  sentimento: 'normal',
+  professor: '',
   tecnicasAprendidas: '',
   observacoes: '',
-  rolas: [] as RolaRascunho[], 
+  rolas: [] as RolaRascunho[],
 })
 
 console.log(form.data);
@@ -77,7 +77,7 @@ const confirmarRola = () => {
   if (!rolaTemp.parceiro) alertaToast.erro('Digite o nome do parceiro antes de confirmar a rola!')
 
   form.rolas.push({
-    id: Date.now(), 
+    id: Date.now(),
     parceiro: rolaTemp.parceiro, // <-- Aqui
     faixaParceiro: rolaTemp.faixaParceiro, // <-- Aqui
     duracao: rolaTemp.duracao,
@@ -91,7 +91,7 @@ const confirmarRola = () => {
   rolaTemp.finalizacoes_aplicadas = []
   rolaTemp.finalizacoes_sofridas = []
   rolaTemp.novaAplicada = ''
-  rolaTemp.novaSofrida = '' 
+  rolaTemp.novaSofrida = ''
 }
 
 // Estado temporário para o conjunto Golpe + Posição
@@ -120,21 +120,21 @@ const salvarTreino = async () => {
   // 1. Se o usuário digitou um parceiro mas esqueceu de clicar em "Confirmar Rola",
   // nós empurramos para a lista automaticamente para ele não perder o dado.
   if (rolaTemp.parceiro && rolaTemp.parceiro.trim() !== '') {
-    confirmarRola() 
+    confirmarRola()
   }
 
   try {
     // 2. O TRADUTOR: Montando o Payload exatamente como o Zod exige
     const payload = {
       usuarioId: (session.value?.user as any)?.id,
-      tipo: form.tipo, 
+      tipo: form.tipo,
       sentimento: form.sentimento,
       professor: form.professor || null, // Se estiver vazio, manda null pro banco
       tecnicasAprendidas: form.tecnicasAprendidas || null,
       data: form.data ? new Date(form.data).toISOString() : new Date().toISOString(),
       duracao: form.duracao,
       observacoes: form.observacoes || null,
-      
+
       // Traduzindo a lista de rolas do Frontend para o Backend
       rolas: form.rolas.map(r => {
         let resultadoFinal = 'empate';
@@ -144,7 +144,7 @@ const salvarTreino = async () => {
         if (r.finalizacoes_aplicadas.length > 0) {
           resultadoFinal = 'finalizei';
           golpeFinal = r.finalizacoes_aplicadas[0]; // Pega o primeiro golpe
-        } 
+        }
         // Se não, mas tem sofrida, ele perdeu
         else if (r.finalizacoes_sofridas.length > 0) {
           resultadoFinal = 'fui_finalizado';
@@ -162,20 +162,16 @@ const salvarTreino = async () => {
       })
     }
 
-    console.log('PACOTE SAINDO DO FRONTEND:', JSON.stringify(payload, null, 2))
-
     // 3. Disparando o POST real para a nossa API
     const resposta = await $fetch('/api/treinos', {
       method: 'POST',
       body: payload
     })
 
-    console.log('Treino salvo no banco com sucesso!', resposta)
+    emit('salvo')
 
-    // 4. Avisa a tela principal que deu certo! 
-    // (Não precisamos mais mandar o objeto falso, a tela principal vai dar o refresh)
-    emit('save')
-    
+    alertaToast.sucesso('Treino salvo com sucesso!')
+
   } catch (error: any) {
     // Se o Zod barrar, o ofetch captura o erro aqui
     console.error('Erro na validação do Zod:', error.data)
@@ -189,90 +185,73 @@ const salvarTreino = async () => {
     <div v-if="passoAtual === 1" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-ui-text mb-1">Data</label>
-        <input
-          type="date"
-          v-model="form.data"
-          class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none"
-        />
+        <input type="date" v-model="form.data"
+          class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-ui-text mb-1">Duração (min)</label>
-        <input
-          type="number"
-          v-model="form.duracao"
-          class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none"
-        />
+        <input type="number" v-model="form.duracao"
+          class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
       </div>
 
-       <div>
+      <div>
         <label class="block text-sm font-medium text-ui-text mb-1">Técnicas focadas</label>
-        <input type="text" v-model="form.tecnicasAprendidas" placeholder="Ex: Passagem de guarda aranha" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
+        <input type="text" v-model="form.tecnicasAprendidas" placeholder="Ex: Passagem de guarda aranha"
+          class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-ui-text mb-1">Como foi o treino? (Obs)</label>
-        <textarea
-          v-model="form.observacoes"
-          rows="3"
-          placeholder="Estava muito quente..."
-          class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none resize-none"
-        ></textarea>
+        <textarea v-model="form.observacoes" rows="3" placeholder="Estava muito quente..."
+          class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none resize-none"></textarea>
 
         <div>
-        <label class="block text-sm font-medium text-ui-text mb-1">Tipo de Treino</label>
-        <select v-model="form.tipo" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none">
-          <option value="com_kimono">Com Kimono</option>
-          <option value="sem_kimono">No-Gi (Sem Kimono)</option>
-          <option value="drills">Apenas Drills</option>
-          <option value="open_mat">Open Mat</option>
-        </select>
-      </div>
+          <label class="block text-sm font-medium text-ui-text mb-1">Tipo de Treino</label>
+          <select v-model="form.tipo"
+            class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none">
+            <option value="com_kimono">Com Kimono</option>
+            <option value="sem_kimono">No-Gi (Sem Kimono)</option>
+            <option value="drills">Apenas Drills</option>
+            <option value="open_mat">Open Mat</option>
+          </select>
+        </div>
 
-      <div>
-        <label class="block text-sm font-medium text-ui-text mb-1">Como você se sentiu?</label>
-        <select v-model="form.sentimento" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none">
-          <option value="normal">Normal</option>
-          <option value="forte">Forte / Voando</option>
-          <option value="tecnico">Técnico / Fluido</option>
-          <option value="cansado">Cansado</option>
-          <option value="destruido">Destruído (Amassado)</option>
-        </select>
-      </div>
+        <div>
+          <label class="block text-sm font-medium text-ui-text mb-1">Como você se sentiu?</label>
+          <select v-model="form.sentimento"
+            class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none">
+            <option value="normal">Normal</option>
+            <option value="forte">Forte / Voando</option>
+            <option value="tecnico">Técnico / Fluido</option>
+            <option value="cansado">Cansado</option>
+            <option value="destruido">Destruído (Amassado)</option>
+          </select>
+        </div>
 
-      <div>
-        <label class="block text-sm font-medium text-ui-text mb-1">Professor(a) de hoje</label>
-        <input type="text" v-model="form.professor" placeholder="Ex: Mestre Elton" class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
-      </div>
+        <div>
+          <label class="block text-sm font-medium text-ui-text mb-1">Professor(a) de hoje</label>
+          <input type="text" v-model="form.professor" placeholder="Ex: Mestre Elton"
+            class="w-full border border-ui-border rounded-lg p-2 bg-ui-background focus:ring-2 focus:ring-brand outline-none" />
+        </div>
 
-     
+
       </div>
 
       <div class="pt-4 flex gap-3">
-        <button
-          @click="salvarTreino"
-          class="flex-1 py-3 text-ui-muted font-medium hover:bg-gray-100 rounded-lg"
-        >
+        <button @click="salvarTreino" class="flex-1 py-3 text-ui-muted font-medium hover:bg-gray-100 rounded-lg">
           Sem Rola (Salvar)
         </button>
-        <button
-          @click="passoAtual = 2"
-          class="flex-1 py-3 bg-brand text-white font-bold rounded-lg shadow-sm hover:bg-brand-hover"
-        >
+        <button @click="passoAtual = 2"
+          class="flex-1 py-3 bg-brand text-white font-bold rounded-lg shadow-sm hover:bg-brand-hover">
           Próximo: Rolas
         </button>
       </div>
     </div>
     <div v-else class="space-y-4">
-      <div
-        v-if="form.rolas.length > 0"
-        class="flex gap-2 overflow-x-auto pb-2 mb-2 border-b border-ui-border"
-      >
-        <div
-          v-for="r in form.rolas"
-          :key="r.id"
-          class="shrink-0 bg-brand-light text-brand text-xs px-3 py-1 rounded-full font-bold"
-        >
+      <div v-if="form.rolas.length > 0" class="flex gap-2 overflow-x-auto pb-2 mb-2 border-b border-ui-border">
+        <div v-for="r in form.rolas" :key="r.id"
+          class="shrink-0 bg-brand-light text-brand text-xs px-3 py-1 rounded-full font-bold">
           vs. {{ r.parceiro }}
         </div>
       </div>
@@ -282,17 +261,12 @@ const salvarTreino = async () => {
 
         <div class="grid grid-cols-3 gap-3">
           <div class="col-span-2">
-            <input
-              v-model="rolaTemp.parceiro"
-              placeholder="Nome do parceiro"
-              class="w-full p-2 border border-ui-border rounded text-sm outline-none focus:border-brand bg-white"
-            />
+            <input v-model="rolaTemp.parceiro" placeholder="Nome do parceiro"
+              class="w-full p-2 border border-ui-border rounded text-sm outline-none focus:border-brand bg-white" />
           </div>
           <div>
-            <select
-              v-model="rolaTemp.faixaParceiro"
-              class="w-full p-2 border border-ui-border rounded text-sm outline-none bg-white"
-            >
+            <select v-model="rolaTemp.faixaParceiro"
+              class="w-full p-2 border border-ui-border rounded text-sm outline-none bg-white">
               <option v-for="f in OPCOES_FAIXA" :key="f.value" :value="f.value">{{ f.label }}</option>
             </select>
           </div>
@@ -304,35 +278,23 @@ const salvarTreino = async () => {
           <div class="flex gap-2 items-end bg-gray-50 p-3 rounded-lg border border-ui-border">
             <div class="flex-1">
               <label class="text-xs text-ui-muted mb-1 block">Golpe</label>
-              <InputAutoComplete
-                :items="LISTA_GOLPES"
-                placeholder="Ex: Armlock"
-                v-model="finalizacaoTemp.golpe"
-              />
+              <InputAutoComplete :items="LISTA_GOLPES" placeholder="Ex: Armlock" v-model="finalizacaoTemp.golpe" />
             </div>
 
             <div class="flex-1">
               <label class="text-xs text-ui-muted mb-1 block">Posição</label>
-              <InputAutoComplete
-                :items="LISTA_POSICOES"
-                placeholder="Ex: Montada"
-                v-model="finalizacaoTemp.posicao"
-              />
+              <InputAutoComplete :items="LISTA_POSICOES" placeholder="Ex: Montada" v-model="finalizacaoTemp.posicao" />
             </div>
           </div>
 
           <div class="flex gap-3">
-            <button
-              @click="addComboFinalizacao('aplicada')"
-              class="flex-1 py-2 bg-green-100 text-green-700 font-bold text-sm rounded hover:bg-green-200 transition-colors cursor-pointer"
-            >
+            <button @click="addComboFinalizacao('aplicada')"
+              class="flex-1 py-2 bg-green-100 text-green-700 font-bold text-sm rounded hover:bg-green-200 transition-colors cursor-pointer">
               + Peguei
             </button>
 
-            <button
-              @click="addComboFinalizacao('sofrida')"
-              class="flex-1 py-2 bg-red-100 text-red-700 font-bold text-sm rounded hover:bg-red-200 transition-colors cursor-pointer"
-            >
+            <button @click="addComboFinalizacao('sofrida')"
+              class="flex-1 py-2 bg-red-100 text-red-700 font-bold text-sm rounded hover:bg-red-200 transition-colors cursor-pointer">
               + Tomei
             </button>
           </div>
@@ -340,16 +302,11 @@ const salvarTreino = async () => {
           <div class="space-y-2">
             <div v-if="rolaTemp.finalizacoes_aplicadas.length > 0" class="flex flex-wrap gap-2">
               <span class="text-xs font-bold text-green-600 self-center shrink-0">Peguei:</span>
-              <span
-                v-for="(item, i) in rolaTemp.finalizacoes_aplicadas"
-                :key="i"
-                class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded border border-green-100 flex items-center gap-2"
-              >
+              <span v-for="(item, i) in rolaTemp.finalizacoes_aplicadas" :key="i"
+                class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded border border-green-100 flex items-center gap-2">
                 {{ item }}
-                <button
-                  @click="removerFinalizacao('aplicada', i)"
-                  class="hover:text-green-900 font-bold cursor-pointer"
-                >
+                <button @click="removerFinalizacao('aplicada', i)"
+                  class="hover:text-green-900 font-bold cursor-pointer">
                   ×
                 </button>
               </span>
@@ -357,16 +314,10 @@ const salvarTreino = async () => {
 
             <div v-if="rolaTemp.finalizacoes_sofridas.length > 0" class="flex flex-wrap gap-2">
               <span class="text-xs font-bold text-red-600 self-center shrink-0">Tomei:</span>
-              <span
-                v-for="(item, i) in rolaTemp.finalizacoes_sofridas"
-                :key="i"
-                class="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 flex items-center gap-2"
-              >
+              <span v-for="(item, i) in rolaTemp.finalizacoes_sofridas" :key="i"
+                class="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 flex items-center gap-2">
                 {{ item }}
-                <button
-                  @click="removerFinalizacao('sofrida', i)"
-                  class="hover:text-red-900 font-bold cursor-pointer"
-                >
+                <button @click="removerFinalizacao('sofrida', i)" class="hover:text-red-900 font-bold cursor-pointer">
                   ×
                 </button>
               </span>
@@ -374,24 +325,22 @@ const salvarTreino = async () => {
           </div>
         </div>
 
-        <button
-          @click="confirmarRola"
-          class="w-full py-2 bg-ui-text text-white text-sm font-bold rounded hover:bg-black transition-colors cursor-pointer"
-        >
+        <button @click="confirmarRola"
+          class="w-full py-2 bg-ui-text text-white text-sm font-bold rounded hover:bg-black transition-colors cursor-pointer">
           Confirmar Rola & Adicionar Outro
         </button>
       </div>
     </div>
   </div>
   <div class="pt-2 flex flex-col gap-2">
-    <button
-      @click="salvarTreino"
-      class="w-full py-3 bg-brand text-white font-bold rounded-lg shadow-sm hover:bg-brand-hover"
-    >
+    <button @click="salvarTreino"
+      class="w-full py-3 bg-brand text-white font-bold rounded-lg shadow-sm hover:bg-brand-hover">
       Finalizar e Salvar Treino
     </button>
-    <button @click="passoAtual = 1" class="text-xs text-center text-ui-muted underline">
-      Voltar para dados gerais
+
+    <button type="button" @click="emit('cancelar')"
+      class="text-xs text-center text-ui-muted underline hover:text-gray-600 transition-colors">
+      Cancelar e voltar ao Início
     </button>
   </div>
 </template>
