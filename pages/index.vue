@@ -5,8 +5,13 @@ import type { TreinoFrontend, UsuarioFrontend } from '../utils/types'; // Ajuste
 const { data: session, status } = useAuth()
 
 // 2. Busca de Treinos da API
-const { data: response, refresh, pending } = useFetch<{ data: TreinoFrontend[], success: boolean }>('/api/treinos')
-const treinos = computed(() => response.value?.data || [])
+const { data: responseTreinos, refresh, pending } = useFetch<{ data: TreinoFrontend[], success: boolean }>('/api/treinos')
+const treinos = computed(() => responseTreinos.value?.data || [])
+
+const { data: responseUsuario } = useFetch<any>('/api/perfil')
+
+
+  console.log('Resposta do Perfil:', responseUsuario.value)
 
 // 3. Montagem do Usuário Real
 const usuarioReal = computed(() => {
@@ -16,9 +21,11 @@ const usuarioReal = computed(() => {
     id: (session.value.user as any).id || '',
     nome: session.value.user.name || 'Lutador',
     email: session.value.user.email || '',
-    faixa: 'azul', // Mantendo a faixa azul para você, Felipe
-    graus: 0,
-    dataCadastro: new Date().toISOString()
+    faixa: responseUsuario.value?.data?.faixa || 'branca', 
+    graus: responseUsuario.value?.data?.graus || 0,
+    
+    // Puxa a data real do banco para a contagem de dias do crachá funcionar de verdade
+    dataCadastro: responseUsuario.value?.data?.dataUltimaGraduacao || new Date().toISOString()
   } as UsuarioFrontend
 })
 

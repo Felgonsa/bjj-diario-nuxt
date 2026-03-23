@@ -31,6 +31,7 @@ export interface UsuarioFrontend {
   equipe?: string
   pesoAtual?: number
   dataCadastro: string
+  dataUltimaGraduacao?: string
 }
 
 export interface TreinoFrontend {
